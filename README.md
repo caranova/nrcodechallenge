@@ -8,3 +8,4 @@
 
  ## Known issues
 * can't pipe `cat` (maybe others?) without explicit `-` parameter after `--file` flag
+* known compatibility issues on cmd and PowerShell 
