@@ -5,6 +5,28 @@ import fileinput
 from collections import Counter
 import regex
 
+
+def showtally(func):
+    def wrapper(*args, **kwargs):
+        for [phrase, tally] in func(*args, **kwargs):
+            print(phrase + " - " + str(tally))
+    return wrapper
+
+
+@showtally
+def tally_three_word_phrase(text: str, num=100):
+    """Tally the occurances of three-word phrases in given text.
+
+    Keyword Arguments:
+    text -- the text to be searched for three-word phrases
+    num  -- the number of results to keep (default 100)
+    """
+    match = regex.findall(r'(?=\b(\w+ +\w+ +\w+)\b)', text)
+    count = Counter()
+    count.update([phrase for phrase in match])
+    return count.most_common()[:num]
+
+
 parser = argparse.ArgumentParser(
     description=("When given text(s) will return a list of the \n"
                  "100 most common three word sequences.")
@@ -23,21 +45,15 @@ args = parser.parse_args()
 if (not args.file):
     sys.exit("pipe via stdin or pass file(s)")
 
-lower_text = ''  # to hold the lower-case text
+fulltext = ''  # to hold the lower-case full  (concatenated) text files
+
 if type(args.file) is list:
+    # concatenate any number of files so that phrase
+    # matches are assessed from the whole, not just the parts,
+    # and make them lower-case so that the search is case-insensitive
     for f in args.file:
-        lower_text += f.read().lower()    # concatenate both files so that matches match from the whole,
-                                          # not just the parts, and make them lower-case so that the search is case insensitive
+        fulltext += f.read().lower()
 else:
-    lower_text = args.file.read().lower()   # this gets the piped file input, since it isnt parsed as a file-list
+    fulltext = args.file.read().lower()
 
-m = regex.findall(r'(?=\b(\w+ +\w+ +\w+)\b)',lower_text)    # matches 3 words including any number of spaces
-                                                            # between them and captures the three word sequence as a capture group
-c = Counter() # dict subclass
-
-for threeword in m:    # for each three-word 'phrase' in the match , add a tally
-    c[threeword] +=1
-mostcommon = c.most_common()[:100]    # sort them by most common and truncate to the first 100
-
-for [phrase, tally] in mostcommon:
-    print(phrase + " - " + str(tally))
+tally_three_word_phrase(fulltext)
